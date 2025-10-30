@@ -1,4 +1,6 @@
 # Carrying capacity calculator for pedestrians
+This tool ia available online at this link: [Carrying Capacity Calculator](https://carryingcapacity.github.io)
+
 ## Introduction
 This tool calculates the carrying capacities for pedestrians in a user-defined area on [OpenStreetMap (OSM)](https://www.openstreetmap.org/), a free, open geographic database with worldwide coverage, updated and maintained by a community of volunteers through open collaboration.
 
