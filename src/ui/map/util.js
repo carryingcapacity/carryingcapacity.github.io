@@ -360,14 +360,14 @@ function bindPopup(e, context, writable) {
         '<tr><td>Longitude</td><td>' +
         feature.geometry.coordinates[0].toFixed(4) +
         '</td></tr>';
-    } else if (feature.geometry.type === 'Polygon') {
+    } else if (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon') {
       if(!context.metadata.areaUnit) {
         loadAreaUnitFromStorage(context);
       }
     }
     info += '</table>';
 
-    if (feature.geometry.type === 'Polygon') {
+    if (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon') {
       const id = featureHash(feature);
       walkable_meters = context.metadata.areas[id]?.meters;
 

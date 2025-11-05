@@ -52,7 +52,7 @@ module.exports = function (context) {
     renderMetadata();
 
     function renderMetadata() {
-      if(feature.geometry.type === "Polygon") {
+      if(feature.geometry.type === "Polygon" || feature.geometry.type === "MultiPolygon") {
         expandMetadataWithTotalArea(feature);
         if(typeof context.metadata.areas[id_hash]?.meters === "number") {
           expandMetadataWithCarryingCapacity(feature, context.metadata.areas[id_hash].meters);
