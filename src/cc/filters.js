@@ -88,6 +88,7 @@ function isWater(feature){
     feature.properties.natural	== "wetlands" ||
     feature.properties.natural	== "mud" ||
     feature.properties.natural	== "shoal" ||
+    feature.properties.leisure == "swimming_pool" ||
     feature.properties.waterway) && 
     isPolygon(feature); 
 }
@@ -162,10 +163,6 @@ function isLine(feature){
 
 function isPolygon(feature){
     return feature.geometry.type.includes("Polygon");
-}
-
-function isPoint(feature){
-    return feature.geometry.type == "Point";
 }
 
 function isPoint(feature){

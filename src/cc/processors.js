@@ -1,6 +1,6 @@
 function processSmallMonuments(features){
     let processed = [];
-    for(f of features){
+    for(const f of features){
         if(isPolygon(f))
             processed.push(addBuffer(f, 0.01));
         else
@@ -11,7 +11,7 @@ function processSmallMonuments(features){
 
 function processBuildings(features, removeInnerRings=true){
     let processed = [];
-    for(f of features){
+    for(const f of features){
         if(removeInnerRings && f.geometry.type == "Polygon"){
             let outerRing = f.geometry.coordinates[0];
             f.geometry.coordinates = [outerRing];
@@ -24,7 +24,7 @@ function processBuildings(features, removeInnerRings=true){
 
 function processBenches(features){
     let processed = [];
-    for(f of features){
+    for(const f of features){
         processed.push(turf.buffer(f, 0.5, {units: "meters", steps: 4}));
     }
     return processed;
@@ -32,7 +32,7 @@ function processBenches(features){
 
 function processTrees(features){
     let processed = [];
-    for(f of features){
+    for(const f of features){
         processed.push(addBuffer(f, 0.5));
     }
     return processed;
@@ -40,16 +40,16 @@ function processTrees(features){
 
 function processBarriers(features){
     let processed = [];
-    for(f of features){
+    for(const f of features){
         processed.push(addBuffer(f, 0.4));
     }
     return processed;
 }
 
 function processWater(filteredFeatures, bounds){
-    bridges = addBufferMany(filteredFeatures.bridges, 0.01);
-    waterBodies = addBufferMany(filteredFeatures.waterBodies, 0.05);
-    processed = [];
+    let bridges = addBufferMany(filteredFeatures.bridges, 0.01);
+    let waterBodies = addBufferMany(filteredFeatures.waterBodies, 0.05);
+    let processed = [];
     for (let water of waterBodies){
         processed.push(differenceMany(water, bridges));
     }
