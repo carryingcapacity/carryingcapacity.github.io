@@ -115,7 +115,7 @@ function walkableArea(features, bounds, options={}){
         //console.log(options.customFeatures.features);
     }
         
-    let walkableAreaPolygon = bounds;
+    let walkableAreaPolygon = truncateGeoJSON(bounds, 7);
 
     for(const f of unwalkablePolygons){
         try{
@@ -140,7 +140,7 @@ function walkableArea(features, bounds, options={}){
         
     }
 
-    return walkableAreaPolygon
+    return truncateGeoJSON(walkableAreaPolygon);
 }
 
 function walkableAreaWithSubAreas(features, bounds, options, workerId){

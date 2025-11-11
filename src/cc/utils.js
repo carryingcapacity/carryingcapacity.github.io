@@ -1,7 +1,7 @@
 // Buffer functions
 function addBuffer(feature, value){
     try{
-        return turf.buffer(feature, value, {units: 'meters'});
+        return truncateGeoJSON(turf.buffer(feature, value, {units: 'meters'}));
     }catch(error){
         console.log(feature)
         console.log(error)
@@ -14,6 +14,78 @@ function addBufferMany(features, value){
         buffered.push(addBuffer(feature, value));
     }
     return buffered;
+}
+
+// Geo utils
+
+function truncateGeoJSON(geojson, decimals = 7) {
+  const factor = Math.pow(10, decimals);
+
+  // Helper: truncate a single number
+  const trunc = (num) => Math.trunc(num * factor) / factor;
+
+  // Helper: truncate a single coordinate [lon, lat, (optional alt)]
+  const truncateCoord = (coord) => coord.map(trunc);
+
+  // Recursively truncate coordinate arrays (works for all geometry types)
+  const truncateCoords = (coords) => {
+    if (typeof coords[0] === "number") {
+      // Single coordinate
+      return truncateCoord(coords);
+    }
+    // Nested coordinates
+    return coords.map(truncateCoords);
+  };
+
+  // Process any geometry object
+  const processGeometry = (geometry) => {
+    if (!geometry) return geometry;
+
+    switch (geometry.type) {
+      case "Point":
+      case "MultiPoint":
+      case "LineString":
+      case "MultiLineString":
+      case "Polygon":
+      case "MultiPolygon":
+        return {
+          ...geometry,
+          coordinates: truncateCoords(geometry.coordinates),
+        };
+
+      case "GeometryCollection":
+        return {
+          ...geometry,
+          geometries: geometry.geometries.map(processGeometry),
+        };
+
+      default:
+        // Unrecognized geometry type, return as-is
+        return geometry;
+    }
+  };
+
+  // Handle FeatureCollection
+  if (geojson.type === "FeatureCollection") {
+    return {
+      ...geojson,
+      features: geojson.features.map((f) => ({
+        ...f,
+        geometry: processGeometry(f.geometry),
+      })),
+    };
+  }
+
+  // Handle Feature
+  if (geojson.type === "Feature") {
+    return {
+      ...geojson,
+      geometry: processGeometry(geojson.geometry),
+    };
+  }
+
+  // Otherwise assume it's a bare Geometry
+  return processGeometry(geojson);
 }
 
 //bulk functions
