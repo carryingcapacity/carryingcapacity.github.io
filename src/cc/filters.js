@@ -4,7 +4,6 @@ function filterFeatures(features, bounds){
         railways: [],
         buildings: [],
         waterBodies: [],
-        restrictedAreas: [],
         benches: [],
         trees: [],
         smallMonuments: [],
@@ -14,21 +13,33 @@ function filterFeatures(features, bounds){
         boundaries:[],
         land:[],
         coastlines:[],
+
+        parkingAreas: [],
+        cityBlocks:[],
+        plots:[],
+        flowerbeds:[],
+        privateAreas: [],
+        walkableAreas: []
     };
 
-    for (let feature of features) {
+    for (const feature of features) {
+        if(!isAboveGround(feature))
+            continue;
+
         if(isBuilding(feature))
             filteredFeatures.buildings.push(feature);
         if(isWater(feature))
             filteredFeatures.waterBodies.push(turf.intersect(feature, bounds));
         if(isRoad(feature))
             filteredFeatures.roads.push(feature);
+        if(isParkingArea(feature))
+            filteredFeatures.parkingAreas.push(feature);
         if(isRailway(feature))
             filteredFeatures.railways.push(feature);
         if(isBridge(feature))
             filteredFeatures.bridges.push(feature);
-        if(isRestrictedArea(feature))
-            filteredFeatures.restrictedAreas.push(feature);
+        if(isPrivateArea(feature))
+            filteredFeatures.privateAreas.push(feature);
         if(isBench(feature))
             filteredFeatures.benches.push(feature);
         if(isTree(feature))
@@ -45,12 +56,18 @@ function filterFeatures(features, bounds){
             filteredFeatures.land.push(feature);
         if(isCoastline(feature))
             filteredFeatures.coastlines.push(feature);
+        if(isCityBlock(feature))
+            filteredFeatures.cityBlocks.push(feature);
+        if(isFlowerbed(feature))
+            filteredFeatures.flowerbeds.push(feature);  
+        if(isWalkableArea(feature))
+            filteredFeatures.walkableAreas.push(feature);
     }
 
     return filteredFeatures;
 }
 
-// Type filters
+// ---------------------------------------------- Type filters -------------------------------------------
 
 function isRoad(feature){   
     return feature.properties.highway &&
@@ -61,7 +78,7 @@ function isRoad(feature){
     feature.properties.highway != "steps" &&
     feature.properties.highway != "cycleway" && // Debatable...
     feature.properties.highway != "path" &&
-    //feature.properties.highway != "living_street" &&
+    feature.properties.highway != "living_street" && // living street should not be congested
     isAboveGround(feature) &&
     isLine(feature);
 }
@@ -74,9 +91,24 @@ function isRailway(feature){
     isLine(feature);
 }
 
+function isParkingArea(feature){   
+    return (feature.properties.amenity == "motorcycle_parking" ||  
+    feature.properties.amenity == "bicycle_parking" ||
+    feature.properties.amenity == "parking") &&
+    feature.properties.parking !== "underground" &&
+    isPolygon(feature);
+}
+
 function isBuilding(feature){   
     return feature.properties.building &&
     isAboveGround(feature) &&
+    isPolygon(feature);
+}
+
+function isWalkableArea(feature){
+    return (feature.properties.highway == "pedestrian" ||
+    feature.properties.foot == "designated" ||
+    feature.properties.footway) &&
     isPolygon(feature);
 }
 
@@ -121,9 +153,38 @@ function isGrass(feature){
     isPolygon(feature);
 }
 
-function isRestrictedArea(feature){
-    return (feature.properties.landuse == "military" ||
-    feature.properties.aeroway) && 
+function isFlowerbed(feature){
+    return feature.properties.landuse == "flowerbed" && 
+    isPolygon(feature);
+}
+
+function isPrivateArea(feature){
+    return (feature.properties.landuse == "military" || //Military bases
+    feature.properties.landuse == "railway" || //Train areas with railways
+    feature.properties.landuse == "construction" ||
+    feature.properties.landuse == "quarry" ||   //Quarries
+    // feature.properties.landuse == "industrial" || //Industrial areas
+    //feature.properties.landuse == "cemetery" ||   //Cemeteries
+    feature.properties.aeroway ||              //Airports
+    feature.properties.access == "private" ||  //General private areas with access restrictions
+    feature.properties.access == "no" ||       //General private areas with access restrictions
+    feature.properties.leisure == "stadium" || //Sports stadiums
+    feature.properties.leisure == "golf_course" ||
+    feature.properties.sport ||
+    feature.properties.amenity == "school" ||
+    feature.properties.amenity == "prison" ||
+    isPlot(feature)) &&  
+    isAboveGround(feature) &&
+    isPolygon(feature);
+}
+
+function isCityBlock(feature){
+    return feature.properties.place == "city_block" && 
+    isPolygon(feature);
+}
+
+function isPlot(feature){
+    return feature.properties.place == "plot" && 
     isPolygon(feature);
 }
 
@@ -156,7 +217,8 @@ function isCoastline(feature){
     feature.properties.natural === "coastline";
 }
 
-// Geometry type filters
+// ------------------------------------------ Geometry type filters -------------------------------------
+
 function isLine(feature){
     return feature.geometry.type == "LineString";
 }

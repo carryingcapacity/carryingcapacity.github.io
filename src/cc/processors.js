@@ -17,8 +17,9 @@ function processBuildings(features, removeInnerRings=true){
             f.geometry.coordinates = [outerRing];
         }
         //Small buffer to avoid intersection errors
-        processed.push(addBuffer(f,0.01));
+        processed.push(addBuffer(f,0.05));
     }
+    // TODO - find walkable areas intersectings building to remove from them (e.g., arches) 
     return processed;
 }
 
@@ -66,24 +67,23 @@ function processRoads(roads, laneWidth, diagonalWidth, parallelWidth){
         let numBusLanes = parseInt(road.properties["lanes:bus"] ? road.properties["lanes:bus"]: 0);
         let estWidth = (numLanes + numBusLanes) * laneWidth;
 
-        // PARKING
         if (road.properties["parking:lane:left"] )
             if ( road.properties["parking:lane:left"] == "parallel")
                 estWidth += parallelWidth;
-            else
+            else if ( road.properties["parking:lane:left"] != "no_parking")
                 estWidth += diagonalWidth;
 
         if (road.properties["parking:lane:right"])
             if (road.properties["parking:lane:right"] == "parallel")
                 estWidth += parallelWidth;
-            else
+            else if (road.properties["parking:lane:right"] != "no_parking")
                 estWidth += diagonalWidth;
         
         if (road.properties["parking:lane:both"])
             if (road.properties["parking:lane:both"] == "parallel")
                 estWidth += parallelWidth * 2;
-            else
-                estWidth += diagonalWidth * 2;       
+            else if (road.properties["parking:lane:both"] != "no_parking")
+                estWidth += diagonalWidth * 2;  
 
         road.properties["estWidth"] = estWidth;
         processed.push(turf.buffer(road, estWidth / 2, {units: "meters"}));
