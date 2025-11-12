@@ -1,6 +1,6 @@
 function processSmallMonuments(features){
     let processed = [];
-    for(f of features){
+    for(const f of features){
         if(isPolygon(f))
             processed.push(addBuffer(f, 0.01));
         else
@@ -11,20 +11,21 @@ function processSmallMonuments(features){
 
 function processBuildings(features, removeInnerRings=true){
     let processed = [];
-    for(f of features){
+    for(const f of features){
         if(removeInnerRings && f.geometry.type == "Polygon"){
             let outerRing = f.geometry.coordinates[0];
             f.geometry.coordinates = [outerRing];
         }
         //Small buffer to avoid intersection errors
-        processed.push(addBuffer(f,0.01));
+        processed.push(addBuffer(f,0.05));
     }
+    // TODO - find walkable areas intersectings building to remove from them (e.g., arches) 
     return processed;
 }
 
 function processBenches(features){
     let processed = [];
-    for(f of features){
+    for(const f of features){
         processed.push(turf.buffer(f, 0.5, {units: "meters", steps: 4}));
     }
     return processed;
@@ -32,7 +33,7 @@ function processBenches(features){
 
 function processTrees(features){
     let processed = [];
-    for(f of features){
+    for(const f of features){
         processed.push(addBuffer(f, 0.5));
     }
     return processed;
@@ -40,16 +41,16 @@ function processTrees(features){
 
 function processBarriers(features){
     let processed = [];
-    for(f of features){
+    for(const f of features){
         processed.push(addBuffer(f, 0.4));
     }
     return processed;
 }
 
 function processWater(filteredFeatures, bounds){
-    bridges = addBufferMany(filteredFeatures.bridges, 0.01);
-    waterBodies = addBufferMany(filteredFeatures.waterBodies, 0.05);
-    processed = [];
+    let bridges = addBufferMany(filteredFeatures.bridges, 0.01);
+    let waterBodies = addBufferMany(filteredFeatures.waterBodies, 0.05);
+    let processed = [];
     for (let water of waterBodies){
         processed.push(differenceMany(water, bridges));
     }
@@ -66,24 +67,23 @@ function processRoads(roads, laneWidth, diagonalWidth, parallelWidth){
         let numBusLanes = parseInt(road.properties["lanes:bus"] ? road.properties["lanes:bus"]: 0);
         let estWidth = (numLanes + numBusLanes) * laneWidth;
 
-        // PARKING
         if (road.properties["parking:lane:left"] )
             if ( road.properties["parking:lane:left"] == "parallel")
                 estWidth += parallelWidth;
-            else
+            else if ( road.properties["parking:lane:left"] != "no_parking")
                 estWidth += diagonalWidth;
 
         if (road.properties["parking:lane:right"])
             if (road.properties["parking:lane:right"] == "parallel")
                 estWidth += parallelWidth;
-            else
+            else if (road.properties["parking:lane:right"] != "no_parking")
                 estWidth += diagonalWidth;
         
         if (road.properties["parking:lane:both"])
             if (road.properties["parking:lane:both"] == "parallel")
                 estWidth += parallelWidth * 2;
-            else
-                estWidth += diagonalWidth * 2;       
+            else if (road.properties["parking:lane:both"] != "no_parking")
+                estWidth += diagonalWidth * 2;  
 
         road.properties["estWidth"] = estWidth;
         processed.push(turf.buffer(road, estWidth / 2, {units: "meters"}));

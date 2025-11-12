@@ -85,6 +85,7 @@ function run(numThreads, progressElementID, features, bounds, options, callback)
             console.log("Elapsed time: " + time);
             console.log(values);
             callback(unionArray(values));
+
         })
 
 

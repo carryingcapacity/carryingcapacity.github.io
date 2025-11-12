@@ -1,15 +1,16 @@
 
-function walkableArea(features, bounds, options={}, workerId, progressCallback, 
-    progress={processedPolygons:0, totalPolygons:0}){
-	//try{
-	
+function walkableArea(features, bounds, options={}){
+
     let LANE_WIDTH = 3;
     let RAIL_WIDTH = 3;
-    let PARALLEL_PARKING_WIDTH = 2;
+    let PARALLEL_PARKING_WIDTH = 1.8;
     let DIAGONAL_PARKING_WIDTH = 5;
     let REMOVE_BUILDING_INNER_RINGS = true;
     let WALKABLE_ROADS = false;
     let UNWALKABLE_GRASS = false;
+    let WALKABLE_PARKING_AREAS = false;
+    let WALKABLE_CITY_BLOCKS = false;
+    let WALKABLE_PRIVATE_AREAS = false;
 
     if(options.laneWidth)
         LANE_WIDTH = options.laneWidth;
@@ -25,15 +26,21 @@ function walkableArea(features, bounds, options={}, workerId, progressCallback,
         WALKABLE_ROADS = options.walkableRoads;
     if(options.unwalkableGrass)
         UNWALKABLE_GRASS = options.unwalkableGrass;
+    if(options.walkableParkingAreas)
+        WALKABLE_PARKING_AREAS = options.walkableParkingAreas;
+    if(options.walkablePrivateAreas)
+        WALKABLE_PRIVATE_AREAS = options.walkablePrivateAreas;
+    if(options.walkableCityBlocks)  
+        WALKABLE_CITY_BLOCKS = options.walkableCityBlocks;
 
     // Filter features
     let filteredFeatures = filterFeatures(features, bounds);
 
     let roads = filteredFeatures.roads;
     let railways = filteredFeatures.railways;
+
     let buildings = filteredFeatures.buildings;
     let waterBodies = filteredFeatures.waterBodies;
-    let restrictedAreas = filteredFeatures.restrictedAreas;
     let grass = filteredFeatures.grass;
     let benches = filteredFeatures.benches;
     let trees = filteredFeatures.trees;
@@ -42,6 +49,11 @@ function walkableArea(features, bounds, options={}, workerId, progressCallback,
     let land = filteredFeatures.land;
     let coastlines = filteredFeatures.coastlines;
     let boundaries = filteredFeatures.boundaries;
+
+    let parkingAreas = filteredFeatures.parkingAreas;
+    let flowerbeds = filteredFeatures.flowerbeds;
+    let privateAreas = filteredFeatures.privateAreas;
+    let cityBlocks = filteredFeatures.cityBlocks;
     
     if(WALKABLE_ROADS){
         roads = []; 
@@ -57,6 +69,7 @@ function walkableArea(features, bounds, options={}, workerId, progressCallback,
     trees = processTrees(trees);
     smallMonuments = processSmallMonuments(smallMonuments);
     barriers = processBarriers(barriers);
+    parkingAreas = addBufferMany(parkingAreas, 0.05);
 
     /*console.log("Monuments:");
     console.log(smallMonuments);
@@ -77,71 +90,57 @@ function walkableArea(features, bounds, options={}, workerId, progressCallback,
         }
     }
     else if(coastlines.length > 0 ){
-        if(!turf.booleanWithin(bounds, boundaries[0])){
-            let unmappedWater = turf.difference(bounds, boundaries[0]);
-            waterBodies.push(unmappedWater);
-        }
+        let unmappedWater = turf.difference(bounds, boundaries[0]);
+        waterBodies.push(unmappedWater);
     }
-
-    /*if(boundaries.length != 0){
-        if(!turf.booleanWithin(bounds, boundaries[0])){
-            let unmappedWater = turf.difference(bounds, boundaries[0]);
-            waterWithBridges.push(unmappedWater);
-        }
-    }else{
-        return addBuffer(turf.centroid(bounds), 0.01);
-    }*/
 
     let unwalkablePolygons = buildings.concat(waterBodies, 
-        roads, railways, restrictedAreas, benches, trees, smallMonuments, barriers);
+        roads, railways, benches, trees, smallMonuments, barriers, flowerbeds);
     
-    if(UNWALKABLE_GRASS){
+    if(UNWALKABLE_GRASS)
         unwalkablePolygons = unwalkablePolygons.concat(grass);
-    }
+
+    if(!WALKABLE_PARKING_AREAS)
+        unwalkablePolygons = unwalkablePolygons.concat(parkingAreas);
+
+    if(!WALKABLE_PRIVATE_AREAS)
+        unwalkablePolygons = unwalkablePolygons.concat(privateAreas);
+
+    if(!WALKABLE_CITY_BLOCKS)  
+        unwalkablePolygons = unwalkablePolygons.concat(cityBlocks);
 
     if(options.customFeatures){
-        console.log("Custom geometries:");
-        console.log(options.customFeatures.features);
         unwalkablePolygons = unwalkablePolygons.concat(options.customFeatures.features)
+        //console.log("Custom geometries:");
+        //console.log(options.customFeatures.features);
     }
-
-    /*if(progress.totalPolygons == 0){
-        progress.totalPolygons = unwalkablePolygons.length;
-    }*/
         
-    let walkableAreaPolygon = bounds;
+    let walkableAreaPolygon = truncateGeoJSON(bounds, 7);
 
-    for(let f of unwalkablePolygons){
+    for(const f of unwalkablePolygons){
         try{
             let diff = turf.difference(walkableAreaPolygon, f); 
-            if(diff === null)
+            if(diff === null){
                 diff = addBuffer(turf.centroid(bounds), 0.01);
+                if(walkableAreaPolygon.properties){
+                    diff.properties = walkableAreaPolygon.properties;
+                }
+                return diff;
+            }
             walkableAreaPolygon = diff;
 
         }catch(error){
-            console.log("Error with feature:");
-            console.log(f);
-			console.log(error);
+            if (f && f.properties){
+                console.log("Error with feature: " + f.properties);
+                console.log(f);
+			    console.log(error);
+            }
+                
         }
         
-        /*
-        progress.processedPolygons ++;
-        let processedPolygons = progress.processedPolygons;
-        let totalPolygons = progress.totalPolygons;
-
-        if(processedPolygons % 10 == 0) {
-            if(workerId !== undefined && workerId !== null) {
-                postMessage({progress: true, processedPolygons, totalPolygons, workerId});
-            } else {
-                progressCallback(processedPolygons / totalPolygons * 100);
-            }
-        }*/
     }
 
-    return walkableAreaPolygon;
-	//}catch(error){
-	//	console.log(error);
-	//}
+    return truncateGeoJSON(walkableAreaPolygon);
 }
 
 function walkableAreaWithSubAreas(features, bounds, options, workerId){
@@ -167,7 +166,7 @@ function walkableAreaWithSubAreas(features, bounds, options, workerId){
     }
     progress = {"totalPolygons":totalPolygons,"processedPolygons": 0};
     for(let i = 0; i < subAreas.length; i++){
-        unwalkablePolygons.push(walkableArea(subAreaFeatures[i], subAreas[i], options, workerId, null, progress));
+        unwalkablePolygons.push(walkableArea(subAreaFeatures[i], subAreas[i], options));
         if(workerId !== undefined && workerId !== null) {
             postMessage({progress: true, processedPolygons:i+1, totalPolygons:subAreas.length, workerId});
         } 

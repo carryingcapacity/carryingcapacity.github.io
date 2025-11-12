@@ -102,13 +102,11 @@ module.exports = function (context) {
         let custom_features = context.storage.get("custom_features_" + id_hash);
 
         const options = {
-          railWidth: 3,
-          laneWidth: 3,
-          diagonalWidth: 2,
-          parallelWidth: 5,
           flattenBuildings: sel.select("#buildings").node().checked,
           walkableRoads: sel.select("#roads").node().checked,
           unwalkableGrass: sel.select("#grass").node().checked,
+          walkablePrivateAreas: sel.select("#private-areas").node().checked,
+          walkableParkingAreas: sel.select("#parking").node().checked,
           customFeatures: custom_features
         };
 

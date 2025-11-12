@@ -383,6 +383,9 @@ function bindPopup(e, context, writable) {
       info += '<div> <input type="checkbox" id="buildings" name="buildings" /> <label for="buildings">Remove private building areas</label></div>'
       info += '<div> <input type="checkbox" id="roads" name="roads" /> <label for="roads">Classify roads as walkable</label></div>'
       info += '<div> <input type="checkbox" id="grass" name="grass" /> <label for="grass">Classify grass as unwalkable</label></div>'
+      info += '<div> <input type="checkbox" id="private-areas" name="private-areas" /> <label for="private-areas">Ignore private area restrictions</label></div>'
+      info += '<div> <input type="checkbox" id="parking" name="parking" /> <label for="parking">Classify parking areas as walkable</label></div>'
+      
       info += '<div class="center " style="padding-top:5px"><button type="button" id="upload-geometries" class="minor">Upload custom data</button></div>'
       info += '<input id="upload-geometries-input" type="file" accept=".json,.geojson" style="display:none"/>'
       
