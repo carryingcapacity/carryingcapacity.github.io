@@ -2,7 +2,7 @@
 .metadata,
 .metadata-grid {
   border-collapse: collapse;
-  font-size: 11px;
+  font-size: 10px;
   width: 100%;
   overflow: auto;
   --border-default: 1px solid #ccc;

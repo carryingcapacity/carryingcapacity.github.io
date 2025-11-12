@@ -168,7 +168,3 @@ function isPoint(feature){
     return feature.geometry.type == "Point";
 }
 
-function isPoint(feature){
-    return feature.geometry.type == "Point";
-}
-

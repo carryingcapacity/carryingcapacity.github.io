@@ -509,31 +509,81 @@ function bindPopup(e, context, writable) {
       : '') +
     '</form>';
 
-  const popupOffsets = {
-    top: [0, -200],
-    'top-left': [0, -200],
-    'top-right': [0, -200],
-    bottom: [0, -200],
-    'bottom-left': [0, 200],
-    'bottom-right': [0, 200],
-    left: [25, -20],
-    right: [-25, -20]
+  // Instead of a mapbox popup, create a right-side overlay (sidebar)
+  // Remove any existing sidebar first
+  const existingSidebar = document.getElementById('geojsonio-sidebar');
+  if (existingSidebar) existingSidebar.remove();
+
+  const sidebar = document.createElement('div');
+  sidebar.id = 'geojsonio-sidebar';
+  sidebar.className = 'geojsonio-feature sidebar-overlay';
+  // Inline styles to ensure the sidebar appears on the right side
+  sidebar.style.position = 'fixed';
+  // start from the vertical middle and stretch to the bottom
+  sidebar.style.top = '10vh';
+  sidebar.style.left = '0';
+  sidebar.style.bottom = 'auto';
+  // DO NOT set height when using top+bottom; let the browser calculate it
+  sidebar.style.width = '271px';
+  sidebar.style.zIndex = '9999';
+  sidebar.style.background = 'white';
+  // border on the right since the sidebar docks to the left
+  sidebar.style.borderRight = '1px solid #ccc';
+  sidebar.style.overflowY = 'auto';
+  sidebar.style.padding = '5px';
+  sidebar.style.boxShadow = '2px 0 6px rgba(0,0,0,0.2)';
+
+  // Override any external CSS that limits .geojsonio-feature (e.g. max-height)
+  // Use !important to make sure rules like `max-height:50% !important` are overridden
+  sidebar.style.setProperty('max-height', 'none', 'important');
+  sidebar.style.display = 'flex';
+  sidebar.style.flexDirection = 'column';
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'close-sidebar';
+  closeBtn.setAttribute('aria-label', 'Close');
+  closeBtn.innerHTML = '&times;';
+  closeBtn.style.position = 'absolute';
+  closeBtn.style.right = '5px';
+  closeBtn.style.top = '5px';
+  closeBtn.style.fontSize = '18px';
+  closeBtn.style.background = 'transparent';
+  closeBtn.style.border = 'none';
+  closeBtn.style.cursor = 'pointer';
+  closeBtn.style.zIndex = '10000';
+
+  const contentContainer = document.createElement('div');
+  contentContainer.className = 'geojsonio-feature-content';
+  contentContainer.innerHTML = content;
+  // Let the content area expand and scroll if needed
+  contentContainer.style.flex = '1 1 auto';
+  contentContainer.style.overflowY = 'auto';
+  // Set internal overlay font size to 10px
+  contentContainer.style.fontSize = '10px';
+
+  sidebar.appendChild(closeBtn);
+  sidebar.appendChild(contentContainer);
+
+  document.body.appendChild(sidebar);
+
+  // Fake event object compatible with popup.js which expects e.target._content and e.target._onClose
+  const fakeEvent = {
+    target: {
+      _content: contentContainer,
+      _onClose: function () {
+        const el = document.getElementById('geojsonio-sidebar');
+        if (el) el.remove();
+      }
+    }
   };
 
-  new mapboxgl.Popup({
-    closeButton: false,
-    maxWidth: '251px',
-    offset: - (document.documentElement.clientHeight / 3),
-    anchor: "top",
-    className: 'geojsonio-feature'
-  })
-    .setLngLat(context.map.getCenter())
-    .setHTML(content)
-    .on('open', (e) => {
-      // bind popup event listeners
-      popup(context)(e, feature.id);
-    })
-    .addTo(context.map);
+  // bind popup event listeners using existing popup module
+  popup(context)(fakeEvent, feature.id);
+
+  // hook up close button to the fake event close
+  closeBtn.addEventListener('click', () => {
+    fakeEvent.target._onClose();
+  });
 }
 
 module.exports = {
