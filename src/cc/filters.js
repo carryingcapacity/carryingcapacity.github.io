@@ -29,7 +29,7 @@ function filterFeatures(features, bounds){
         if(isBuilding(feature))
             filteredFeatures.buildings.push(feature);
         if(isWater(feature))
-            filteredFeatures.waterBodies.push(turf.intersect(feature, bounds));
+            filteredFeatures.waterBodies.push(feature);
         if(isRoad(feature))
             filteredFeatures.roads.push(feature);
         if(isParkingArea(feature))
@@ -173,6 +173,7 @@ function isPrivateArea(feature){
     feature.properties.sport ||
     feature.properties.amenity == "school" ||
     feature.properties.amenity == "prison" ||
+    feature.properties.barrier||
     isPlot(feature)) &&  
     isAboveGround(feature) &&
     isPolygon(feature);

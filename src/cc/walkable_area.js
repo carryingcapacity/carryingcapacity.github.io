@@ -157,7 +157,7 @@ function walkableAreaWithSubAreas(features, bounds, options, workerId){
     for(let subArea of subAreas){
         let subFeatures = [];
         for(let feature of features){
-            if(turf.booleanIntersects(feature, subArea)){
+            if(subArea && turf.booleanIntersects(feature, subArea)){
                 subFeatures.push(feature);
             }
         }

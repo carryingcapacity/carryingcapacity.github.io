@@ -549,7 +549,7 @@ function bindPopup(e, context, writable) {
   closeBtn.style.position = 'absolute';
   closeBtn.style.right = '5px';
   closeBtn.style.top = '5px';
-  closeBtn.style.fontSize = '18px';
+  closeBtn.style.fontSize = '20px';
   closeBtn.style.background = 'transparent';
   closeBtn.style.border = 'none';
   closeBtn.style.cursor = 'pointer';

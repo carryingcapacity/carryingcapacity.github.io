@@ -85,7 +85,7 @@ module.exports = function (context) {
       })
       .then(response => {
         if (!response.ok) {
-          alert(`Error on calling Overpass API: ${response.status}`);
+          alert(`Error on calling Overpass API: ${response.status}\n\nTry again later`);
           throw new Error(`HTTP error on overpass call! Status: ${response.status}`);
         }
         return response.json();
@@ -149,7 +149,7 @@ module.exports = function (context) {
       const unitHTML = context.metadata.areaUnit.symbolHTML;
       sel.select(".metadata-grid").html(
         '<div>Area</div><div class="right"><span id="info-area">' +
-        convertArea(area(feature.geometry), areaUnits.SQUARE_METERS, context.metadata.areaUnit).toFixed(2) +
+        parseFloat(convertArea(area(feature.geometry), areaUnits.SQUARE_METERS, context.metadata.areaUnit).toFixed(2)).toLocaleString() +
         '</span> <span class="info-area-unit">' + unitHTML + '</span>' +
         '</div>'
       );
@@ -168,10 +168,10 @@ module.exports = function (context) {
         '<div class="merge row-with-gap">' +
         '<span class="tooltip-label" tooltip="walkable-area">Walkable Area</span>' +
         '</div><div class="right"><span id="info-walkable-area">' +
-        convertArea(walkable_meters, areaUnits.SQUARE_METERS, context.metadata.areaUnit).toFixed(2) +
+        parseFloat(convertArea(walkable_meters, areaUnits.SQUARE_METERS, context.metadata.areaUnit).toFixed(2)).toLocaleString() +
         '</span> <span class="info-area-unit">' + unitHTML + '</span>' +
         '</div><div class="right row-with-gap">' +
-        (walkable_meters / area(feature.geometry) * 100).toFixed(2) +
+        parseFloat((walkable_meters / area(feature.geometry) * 100).toFixed(2)).toLocaleString() +
         '%</div>' +
         '<div class="input"><span class="tooltip-label" tooltip="area-per-pedestrian">Area per Pedestrian</span></div>' +
         '<div class="right input"><input list="los" value="' + areaPerPedestrianInSelectedUnit + '" id="info-area-per-pedestrian">'+
@@ -187,12 +187,12 @@ module.exports = function (context) {
         '<span class="tooltip-label" tooltip="rotation-factor">Rotation Factor</span></div>' +
         '<div class="right input row-with-gap"><input id="info-rotation-factor" value="' + rotationFactor + '"></input></div>' +
         '<div class="row-with-gap"><span class="tooltip-label" tooltip="physical-carrying-capacity">PCC</span></div>' +
-        '<div class="right row-with-gap"><span id="info-physical-carrying-capacity">' + Math.round(walkable_meters / areaPerPedestrian * rotationFactor) + '</span> visitors</div>' +
+        '<div class="right row-with-gap"><span id="info-physical-carrying-capacity">' + Math.round(walkable_meters / areaPerPedestrian * rotationFactor).toLocaleString() + '</span> visitors</div>' +
         correctiveFactorsResponse.html +
         '<div class="input row-with-gap"><span class="tooltip-label" tooltip="management-capacity">Management Capacity</span></div>' +
         '<div class="right input row-with-gap"><input id="info-management-capacity" value="' + managementCapacity + '"></input></div>' +
         '<div><span class="tooltip-label" tooltip="effective-carrying-capacity">ECC</span></div>' +
-        '<div class="right"><span id="info-effective-carrying-capacity">' + Math.round(correctiveFactorsResponse.rcc * managementCapacity) + '</span> visitors</div>'
+        '<div class="right"><span id="info-effective-carrying-capacity">' + Math.round(correctiveFactorsResponse.rcc * managementCapacity).toLocaleString() + '</span> visitors</div>'
       );
 
       // Fixing LOS suggestion functionality
@@ -225,7 +225,7 @@ module.exports = function (context) {
       res +=
         '<div class="add-corrective-factor"><span class="fa-solid fa-plus"></span> Add Corrective Factor</div>' +
         '<div class="row-with-gap"><span class="tooltip-label" tooltip="real-carrying-capacity">RCC</span></div>' +
-        '<div class="right row-with-gap"><span id="info-real-carrying-capacity">' + Math.round(rcc) + '</span> visitors</div>';
+        '<div class="right row-with-gap"><span id="info-real-carrying-capacity">' + Math.round(rcc).toLocaleString() + '</span> visitors</div>';
       return {html: res, rcc};
     }
 
@@ -274,12 +274,12 @@ module.exports = function (context) {
 
       sel
         .select("#info-area")
-        .text(convertArea(area(feature.geometry), areaUnits.SQUARE_METERS, context.metadata.areaUnit).toFixed(2));
+        .text(parseFloat(convertArea(area(feature.geometry), areaUnits.SQUARE_METERS, context.metadata.areaUnit).toFixed(2)).toLocaleString());
       
       if(walkableAreaFeature !== undefined) {
         sel
           .select("#info-walkable-area")
-          .text(convertArea(area(walkableAreaFeature), areaUnits.SQUARE_METERS, context.metadata.areaUnit).toFixed(2))
+          .text(parseFloat(convertArea(area(walkableAreaFeature), areaUnits.SQUARE_METERS, context.metadata.areaUnit).toFixed(2)).toLocaleString())
 
         const areaPerPedestrianOld = parseFloat(sel.select("#info-area-per-pedestrian").property("value"));
         sel
@@ -341,16 +341,16 @@ module.exports = function (context) {
         const id_hash = featureHash(feature);
         const walkableArea = context.metadata.areas[id_hash].meters;
         const pcc = walkableArea / areaPerPedestrianInMeters * rotationFactor;
-        sel.select("#info-physical-carrying-capacity").text(Math.round(pcc));
+        sel.select("#info-physical-carrying-capacity").text(Math.round(pcc).toLocaleString());
         storeInStorage(id_hash, AREA_PER_PEDESTRIAN_STORAGE_KEY, areaPerPedestrianInMeters);
         let rcc = pcc;
         sel.selectAll(".corrective-factor + div input").each(function() {
           rcc *= parseFloat(this.value)
         });
-        sel.select("#info-real-carrying-capacity").text(Math.round(rcc));
+        sel.select("#info-real-carrying-capacity").text(Math.round(rcc).toLocaleString());
         const managementCapacity = parseFloat(d3.select("#info-management-capacity").property("value"));
         const ecc = Math.round(rcc * managementCapacity);
-        sel.select("#info-effective-carrying-capacity").text(ecc);
+        sel.select("#info-effective-carrying-capacity").text(ecc.toLocaleString());
       });
 
       // change rotation factor
@@ -364,16 +364,16 @@ module.exports = function (context) {
         const id_hash = featureHash(feature);
         const walkableArea = context.metadata.areas[id_hash].meters;
         const pcc = walkableArea / areaPerPedestrianInMeters * rotationFactor;
-        sel.select("#info-physical-carrying-capacity").text(Math.round(pcc));
+        sel.select("#info-physical-carrying-capacity").text(Math.round(pcc).toLocaleString());
         storeInStorage(id_hash, ROTATION_FACTOR_STORAGE_KEY, rotationFactor);
         let rcc = pcc;
         sel.selectAll(".corrective-factor + div input").each(function() {
           rcc *= parseFloat(this.value)
         });
-        sel.select("#info-real-carrying-capacity").text(Math.round(rcc));
+        sel.select("#info-real-carrying-capacity").text(Math.round(rcc).toLocaleString());
         const managementCapacity = parseFloat(d3.select("#info-management-capacity").property("value"));
         const ecc = Math.round(rcc * managementCapacity);
-        sel.select("#info-effective-carrying-capacity").text(ecc);
+        sel.select("#info-effective-carrying-capacity").text(ecc.toLocaleString());
       });
 
       // change corrective factor's value
@@ -391,14 +391,14 @@ module.exports = function (context) {
         sel.selectAll(".corrective-factor + div input").each(function() {
           rcc *= parseFloat(this.value)
         });
-        sel.select("#info-real-carrying-capacity").text(Math.round(rcc));
+        sel.select("#info-real-carrying-capacity").text(Math.round(rcc).toLocaleString());
         const computedKey = computeStorageKey(id_hash, CORRECTIVE_FACTORS_STORAGE_KEY);
         const correctiveFactors = JSON.parse(context.storage.get(computedKey));
         correctiveFactors[i].value = parseFloat(d3.event.target.value);
         context.storage.set(computedKey, JSON.stringify(correctiveFactors));
         const managementCapacity = parseFloat(d3.select("#info-management-capacity").property("value"));
         const ecc = Math.round(rcc * managementCapacity);
-        sel.select("#info-effective-carrying-capacity").text(ecc);
+        sel.select("#info-effective-carrying-capacity").text(ecc.toLocaleString());
       });
 
       // add corrective factor
@@ -465,7 +465,7 @@ module.exports = function (context) {
         });
         const managementCapacity = parseFloat(d3.event.target.value);
         const ecc = Math.round(rcc * managementCapacity);
-        sel.select("#info-effective-carrying-capacity").text(ecc);
+        sel.select("#info-effective-carrying-capacity").text(ecc.toLocaleString());
         const computedKey = computeStorageKey(id_hash, MANAGEMENT_CAPACITY_STORAGE_KEY);
         context.storage.set(computedKey, managementCapacity);
       });

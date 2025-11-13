@@ -1,7 +1,11 @@
 // Buffer functions
 function addBuffer(feature, value){
     try{
-        return truncateGeoJSON(turf.buffer(feature, value, {units: 'meters'}));
+        let buff = turf.buffer(feature, value, {units: 'meters'});
+        if (buff){
+          buff = truncateGeoJSON(buff);
+        }
+        return buff;
     }catch(error){
         console.log(feature)
         console.log(error)
@@ -11,7 +15,9 @@ function addBuffer(feature, value){
 function addBufferMany(features, value){
     let buffered = [];
     for(let feature of features){
-        buffered.push(addBuffer(feature, value));
+        let buff = addBuffer(feature, value);
+        if(buff)  
+          buffered.push(addBuffer(feature, value));
     }
     return buffered;
 }
@@ -147,7 +153,9 @@ function divideArea(bounds, numAreas, horizontal=true){
         }
         
         let subArea = addBuffer(turf.polygon(points), 0.01);
-        subAreas.push(turf.intersect(subArea, bounds));
+        let subAreaIntersect = turf.intersect(subArea, bounds);
+        if(subAreaIntersect)
+          subAreas.push(subAreaIntersect);
     }
 
     return subAreas;
